@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
         AdvertiseData advertiseData = new AdvertiseData.Builder()
                 .setIncludeDeviceName(true)     //包含蓝牙名称，如果蓝牙名称过长，会导致startAdvertising失败返回errorCode 1错误；可设置为false不包含名称，或将系统蓝牙名称改短
                 .setIncludeTxPowerLevel(true)   //包含发射功率级别
-                //.addManufacturerData(1, new byte[]{23, 33}) //设备厂商数据，自定义
+                .addManufacturerData(1, new byte[]{73, 66, (byte) 6d}) //设备厂商数据(sfm)，自定义
                 .build();
         //设置蓝牙名称，长度不要太长，否则开启广播会失败（AdvertiseCallback.ADVERTISE_FAILED_DATA_TOO_LARGE）
         mBluetoothAdapter.setName(name);
