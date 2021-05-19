@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +18,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 public class TestActivity extends AppCompatActivity implements View.OnClickListener, BleServerManager.BleServerCallback {
+    private static final String TAG = "TestActivity";
 
     private static final int REQUEST_LOCATION_PERMISSION_CODE = 111;
     private TextView mTvLog;
@@ -63,13 +65,13 @@ public class TestActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.openBleServer:
-                BleServerManager.getInstance().startAdvertising("FLX", this);
+                BleServerManager.getInstance().startAdvertising("GateMachine", this);
                 break;
             case R.id.closeBleServer:
                 BleServerManager.getInstance().stopAdvertising();
                 break;
             case R.id.btnNotify:
-                BleServerManager.getInstance().notifyData2();
+//                BleServerManager.getInstance().notifyDataTest();
                 break;
             default:
                 break;
@@ -112,5 +114,31 @@ public class TestActivity extends AppCompatActivity implements View.OnClickListe
     public void onRecvClientMsg(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
         String data = new String(value);
         printLog("收到客户端发送的数据：" + data);
+        //0x2a 383838383838
+        if (value != null) {
+            if (value[0] == BleProtocol.CMD_OPEN_DOOR) {
+                parseOpenDoor(device, characteristic, value);
+            }
+        }
+    }
+
+    private void parseOpenDoor(BluetoothDevice device, BluetoothGattCharacteristic characteristic, byte[] value) {
+        boolean succeed = BleParser.openDoor(value, "888888");
+        if (succeed) {
+            showToast("已开门");
+        } else {
+            showToast("密码错误");
+        }
+        byte[] openDoorResp = BleProtocol.getOpenDoorResp(succeed);
+        BleServerManager.getInstance().sendNotification(device, characteristic, openDoorResp);
+    }
+
+    public void showToast(final String txt) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(TestActivity.this, txt, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

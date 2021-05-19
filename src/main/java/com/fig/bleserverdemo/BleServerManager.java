@@ -37,7 +37,6 @@ public class BleServerManager {
     private BluetoothGattServer mBluetoothGattServer;
     private BleServerCallback mBleServerCallback;
     private BluetoothGattCharacteristic mCharacteristicWrite;
-    private BluetoothDevice mTDevice;
 
     public static BleServerManager getInstance() {
         return Holder.INSTANCE;
@@ -185,32 +184,28 @@ public class BleServerManager {
             }
             //告诉客户端发送成功
             mBluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, characteristic.getValue());
-            mCharacteristicWrite.setValue("haha");
-            mTDevice = device;
-//            notifyData(device,mCharacteristicWrite,false);
         }
 
         @Override
         public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicReadRequest(device, requestId, offset, characteristic);
-            Log.e(TAG, "onCharacteristicReadRequest: " );
-            mBluetoothGattServer.sendResponse(device,requestId,BluetoothGatt.GATT_SUCCESS, offset,"imresp".getBytes());
+            Log.e(TAG, "onCharacteristicReadRequest: ");
+            mBluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, characteristic.getValue());
         }
 
         @Override
         public void onNotificationSent(BluetoothDevice device, int status) {
             super.onNotificationSent(device, status);
-            Log.e(TAG, "onNotificationSent, status: " +status);
-
+            Log.e(TAG, "onNotificationSent, status: " + status);
         }
     };
 
-    public void notifyData(BluetoothDevice device, BluetoothGattCharacteristic characteristic, boolean confirm) {
-        mBluetoothGattServer.notifyCharacteristicChanged(device, characteristic, confirm);
-    }
-
-    public void notifyData2() {
-        mBluetoothGattServer.notifyCharacteristicChanged(mTDevice, mCharacteristicWrite, false);
+    /**
+     * 发送notification
+     */
+    public void sendNotification(BluetoothDevice device, BluetoothGattCharacteristic characteristic,byte[] data) {
+        characteristic.setValue(data);
+        mBluetoothGattServer.notifyCharacteristicChanged(device, characteristic, false);    //confirm为true表示indication，false表示notification
     }
 
     /**
@@ -232,14 +227,45 @@ public class BleServerManager {
     }
 
     public interface BleServerCallback {
+        /**
+         * 服务开启成功
+         *
+         * @param advertiseSettings
+         */
         void onServerStartSucceed(AdvertiseSettings advertiseSettings);
 
+        /**
+         * 服务开启失败
+         *
+         * @param errorCode 参考类 {@link AdvertiseCallback}
+         */
         void onServerStartFailed(int errorCode);
 
+        /**
+         * 客户端已连接
+         *
+         * @param device
+         * @param status 参考类{@link BluetoothProfile}
+         */
         void onClientConnected(BluetoothDevice device, int status);
 
+        /**
+         * 客户端连接已断开
+         * @param device
+         * @param status 参考类{@link BluetoothProfile}
+         */
         void onClientDisConnected(BluetoothDevice device, int status);
 
+        /**
+         * 收到客户端消息
+         * @param device
+         * @param requestId
+         * @param characteristic
+         * @param preparedWrite
+         * @param responseNeeded
+         * @param offset
+         * @param value 消息数据
+         */
         void onRecvClientMsg(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value);
     }
 }
