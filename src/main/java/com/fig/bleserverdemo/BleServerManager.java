@@ -17,6 +17,7 @@ import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.ParcelUuid;
 import android.util.Log;
 
 import java.util.UUID;
@@ -90,14 +91,20 @@ public class BleServerManager {
                 .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)     //发射功率级别: 极低,低,中,高
                 .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY) //广播模式: 低功耗,平衡,低延迟
                 .build();
-        //广播数据(必须，广播启动就会发送)
+
+        UUID switcherUuid = UUID.fromString("0000ffff-0000-1000-8000-00805f9b34fb");
+        //广播数据(必须，广播启动就会发送，不能超过31个字节)
         AdvertiseData advertiseData = new AdvertiseData.Builder()
                 .setIncludeDeviceName(true)     //包含蓝牙名称，如果蓝牙名称过长，会导致startAdvertising失败返回errorCode 1错误；可设置为false不包含名称，或将系统蓝牙名称改短
                 .setIncludeTxPowerLevel(true)   //包含发射功率级别
-                .addManufacturerData(1, new byte[]{73, 66, (byte) 6d}) //设备厂商数据(sfm)，自定义
+//                .addManufacturerData(1, new byte[]{73, 66, (byte) 6d}) //设备厂商数据(sfm)，自定义
+                .addServiceData(new ParcelUuid(switcherUuid),"haha#1234567890".getBytes())   //添加自定义广播数据(自定义数据+蓝牙名最多19个字节)
+//                .addServiceUuid()
                 .build();
+
         //设置蓝牙名称，长度不要太长，否则开启广播会失败（AdvertiseCallback.ADVERTISE_FAILED_DATA_TOO_LARGE）
-        mBluetoothAdapter.setName(name);
+//        mBluetoothAdapter.setName(name);
+        mBluetoothAdapter.setName("FFL");
         //开启服务
         getBluetoothLeAdvertiser().startAdvertising(settings, advertiseData, mAdvertiseCallback);
     }
